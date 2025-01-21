@@ -6,6 +6,7 @@ interface ButtonProps {
     onClick?: () => void,
     disabled?: boolean,
     name: string,
+    className?: string
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -13,7 +14,8 @@ const Button: React.FC<ButtonProps> = ({
     name,
     size,
     disabled,
-    onClick
+    onClick,
+    className
 }) => {
     const getSizeClasses = () => {
         switch (size) {
@@ -46,7 +48,7 @@ const Button: React.FC<ButtonProps> = ({
 
     return (
         <button
-            className={`border-2 rounded-lg m-4 ${sizeClasses} ${variantClasses}`}
+            className={`border-2 rounded-lg m-4 ${sizeClasses} ${variantClasses} ${className}`}
             onClick={onClick}
             disabled={disabled}
         >

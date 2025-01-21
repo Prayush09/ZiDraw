@@ -11,7 +11,9 @@ const app = express();
 app.use(express.json());
 
 app.post("/api/signup", async (req, res) => {
+    console.log(req.body)
     const parsedData = CreateUserSchema.safeParse(req.body);
+    console.log(parsedData.data);
     if(!parsedData.success){
         res.json({
             message: "Incorrect inputs",
