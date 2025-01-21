@@ -13,7 +13,6 @@ export default function SignupComponent() {
     try {
       // Call the Signup function and await its result
       const response = await Signup(name, email, password);
-      console.log(response.data);
       setMessage("Signup successful!"); // Display success message
     } catch (error) {
       setMessage("Signup failed. Please try again."); // Display error message

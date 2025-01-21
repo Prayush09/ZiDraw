@@ -1,23 +1,24 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { BACKEND_URL } from "@/config";
-import axios from "axios";
+import { useState} from "react";
+import {Signin} from "@/components/Auth/Auth";
 
 export default function SigninComponent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState(""); // To display error messages
 
-  const handleSignin = useCallback(async () => {
+  const handleSignin = async () => {
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/login`, {email, password});
-      localStorage.setItem("token", response.data.token);
+      const response = await Signin(email, password);
+      console.log(response.token);
+      localStorage.setItem("token", response.token);
+      alert("Successfully Logged in!");
     }catch(error) {
       console.error(error);
       setErrorMessage("Failed to sign in. Please check your credentials."); // Update error message
     }
-  }, [email, password]);
+  }
 
   return (
     <div>

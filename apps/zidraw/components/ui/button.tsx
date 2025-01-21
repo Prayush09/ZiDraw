@@ -5,11 +5,13 @@ interface ButtonProps {
     size: 'lg' | 'md' | 'sm',
     onClick?: () => void,
     disabled?: boolean,
-    name: string,
-    className?: string
+    name?: string, // Make this optional since children can also render content
+    className?: string,
+    children?: React.ReactNode // Ensure children is optional
 }
 
-const Button: React.FC<ButtonProps> = ({
+export const Button: React.FC<ButtonProps> = ({
+    children,
     variant,
     name,
     size,
@@ -52,9 +54,9 @@ const Button: React.FC<ButtonProps> = ({
             onClick={onClick}
             disabled={disabled}
         >
-            {name}
+            {children || name} {/* Render children if provided; fallback to name */}
         </button>
     );
 }
 
-export default Button;
+

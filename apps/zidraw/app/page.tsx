@@ -1,70 +1,155 @@
-import Button from '@/components/ui/button';
-import Link from 'next/link';
+"use client";
+
+import Link from "next/link";
+import { PenLine, Users, Zap, Share2, ArrowRight, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [activeFeature, setActiveFeature] = useState<number | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const features = [
+    {
+      icon: <PenLine className="w-6 h-6" />,
+      title: "Smart Drawing Tools",
+      description: "Intuitive tools that make digital drawing feel natural"
+    },
+    {
+      icon: <Users className="w-6 h-6" />,
+      title: "Real-time Collaboration",
+      description: "Work together seamlessly with your team members"
+    },
+    {
+      icon: <Share2 className="w-6 h-6" />,
+      title: "Instant Sharing",
+      description: "Share your creations with just one click"
+    },
+    {
+      icon: <Sparkles className="w-6 h-6" />,
+      title: "Smart Features",
+      description: "AI-powered tools to enhance your creativity"
+    }
+  ];
+
   return (
-
-    <div className="w-full h-full">
+    <div className="w-full min-h-screen bg-gradient-to-b from-background via-background to-secondary/20">
       {/* Navbar */}
-      <div className="flex flex-wrap justify-between items-center p-4">
-        {/* Brand Section */}
-        <div className="flex flex-col sm:flex-row items-center overflow-hidden relative">
-          <span className="flex flex-row text-xl sm:text-2xl p-2 m-2 rounded-lg border-l-2 border-r-2 border-white relative">
-          <img src="@/public/draw.svg" alt="img" className="w-[20px] h-[20px] m-2"/> 
-          <span>Zi-Draw</span> 
-          </span>
-          <span className="text-sm sm:text-base">Draw your own conclusions</span>
-        </div>
+      <nav className={`fixed w-full top-0 z-50 transition-all duration-300 ${
+        isScrolled ? "bg-background/80 backdrop-blur-lg shadow-sm" : "bg-transparent"
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 group">
+                <PenLine className="w-6 h-6 text-primary transition-transform group-hover:rotate-12" />
+                <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
+                  Zi-Draw |
+                </span> 
+              </div>
+              <span className="hidden sm:block text-sm text-muted-foreground">
+                Draw your own conclusions
+              </span>
+            </div>
 
-        {/* Auth Links */}
-        <div className="flex flex-wrap gap-2 mt-4 sm:mt-0">
-          <Link href="/Auth/Signin">
-            <Button variant="primary" size="sm" name="Sign in" />
-          </Link>
-          <Link href="/Auth/Signup">
-            <Button variant="outline" size="sm" name="Sign up" className="ml-0" />
-          </Link>
-            
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <header className="relative overflow-hidden">
-        <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight sm:tracking-normal sm:leading-tight sm:text-6xl text-foreground">
-              Collaborative Whiteboarding
-              <span className="text-primary block">Made Simple</span>
-            </h1>
-            <p className="mx-auto mt-4 sm:mt-6 max-w-md sm:max-w-2xl text-sm sm:text-lg text-muted-foreground">
-              Create, collaborate, and share beautiful diagrams and sketches with our intuitive drawing tool.
-            </p>
-            <div className="mt-6 sm:mt-8 flex items-center justify-center">
-              <Link href="/canvas">
-                <button className="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-cyan-500 to-blue-500 group-hover:from-cyan-500 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-cyan-200 dark:focus:ring-cyan-800">
-                  <span className="relative px-4 py-2 sm:px-5 sm:py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0">
-                    Try Now!
-                  </span>
+            <div className="flex items-center space-x-4">
+              <Link href="/Auth/Signin">
+                <button className="px-4 py-2 text-sm font-medium text-white hover:text-black rounded-lg hover:bg-white transition-colors">
+                  Sign in
+                </button>
+              </Link>
+              <Link href="/Auth/Signup">
+                <button className="px-4 py-2 text-sm font-medium bg-white text-black hover:text-white rounded-lg hover:bg-black/90 transition-colors">
+                  Sign up
                 </button>
               </Link>
             </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* Feature Display Section */}
-      <div className="flex flex-col items-center justify-center p-4 sm:p-8">
-        <div className="text-center">
-          <h2 className="text-lg sm:text-2xl font-semibold">Features</h2>
-          <p className="text-sm sm:text-base mt-2 text-muted-foreground">
-            Discover how Zi-Draw simplifies your collaborative whiteboarding experience.
+      {/* Hero Section */}
+      <section className="pt-32 pb-20 sm:pt-40 sm:pb-32">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-white/90 to-/80">
+            Collaborative Whiteboarding
+            <span className="block mt-2 text-foreground">Made Simple</span>
+          </h1>
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-10">
+            Create, collaborate, and share beautiful diagrams and sketches with our
+            intuitive drawing tool. Experience the future of digital collaboration.
           </p>
+          <Link href="/canvas">
+            <button className="group px-6 py-3 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-lg font-medium hover:shadow-lg hover:from-primary/90 hover:to-primary/70 transition-all duration-300">
+              Start Drawing
+              <ArrowRight className="inline-block ml-2 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </Link>
         </div>
-        <div className="mt-6 w-full max-w-md sm:max-w-2xl grid gap-4 sm:gap-8 grid-cols-1 sm:grid-cols-2">
-          {/* Add feature cards or content here */}
-          MID SECTION
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-secondary/10">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-4">Features</h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            Discover how Zi-Draw transforms your creative process with powerful features
+            designed for modern collaboration.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="group relative p-6 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
+                onMouseEnter={() => setActiveFeature(index)}
+                onMouseLeave={() => setActiveFeature(null)}
+              >
+                <div className={`
+                  absolute inset-0 rounded-xl transition-opacity duration-300
+                  bg-gradient-to-br from-primary/5 to-primary/10
+                  opacity-0 group-hover:opacity-100
+                `} />
+                <div className="relative">
+                  <div className={`
+                    h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4
+                    transform transition-transform duration-300
+                    ${activeFeature === index ? "scale-110" : ""}
+                  `}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4 text-center">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold mb-4">Ready to start creating?</h2>
+            <p className="text-lg text-muted-foreground mb-8">
+              Join thousands of teams already using Zi-Draw to bring their ideas to life
+            </p>
+            <Link href="/Auth/Signup">
+              <button className="group px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-all duration-300">
+                Get Started Free
+                <Zap className="inline-block ml-2 group-hover:scale-110 transition-transform" />
+              </button>
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
