@@ -1,11 +1,24 @@
+"use client"
 import '@/app/globals.css';
-
+import Loading from '@/components/ui/loading'
+import {useState, useEffect} from 'react'
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(()=>{
+      const timer =  setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+  }, [])
+
   return (
     <html lang="en">
       <head>
@@ -15,7 +28,7 @@ export default function RootLayout({
         <link rel='icon' href='/next.svg' />
       </head>
       <body>
-        {children}
+        {isLoading ? <Loading/> : children}
       </body>
     </html>
   );

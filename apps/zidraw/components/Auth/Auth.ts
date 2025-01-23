@@ -10,7 +10,7 @@ export async function Signup(name: string, email: string, password: string): Pro
 
     try {
         const response = await axios.post(`${BACKEND_URL}/api/signup`, {name, email, password});
-        if (!response.data || !response.data.token) {
+        if (!response.data) {
             throw new Error("Invalid signup response");
         }
 
@@ -35,7 +35,6 @@ export async function Signin(email: string, password: string): Promise<{token: s
         if (!response.data || !response.data.token) {
             throw new Error("Invalid signin response");
         }
-
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
