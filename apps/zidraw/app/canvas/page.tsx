@@ -1,11 +1,31 @@
-//TODO: a canvas when the user is not logged in...
+"use client";
 
-export default function FreeCanvas(){
-    return (
-        <>
-            Free Canvas
-        </>
-    )
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { OpenCanvas } from "@/components/Canvas/OpenCanvas";
+
+export default function FreeCanvas() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token ) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      router.push("/room");
+    }
+  }, [isLoggedIn, router]); 
+
+  return (
+    <>
+      <OpenCanvas />
+    </>
+  );
 }
-
-//TODO: Create page where room's can be selected

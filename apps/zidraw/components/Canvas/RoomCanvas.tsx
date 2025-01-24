@@ -1,7 +1,8 @@
 "use client"
 
-import {useEffect, useState, useRef } from 'react'
+import {useEffect, useState } from 'react'
 import Loading from '@/components/ui/loading'
+import { ClosedCanvas } from './ClosedCanvas';
 
 /*
 * Code to build and establish a web-sockeet connection between a user and a room
@@ -33,10 +34,9 @@ export function RoomCanvas({roomId}: {roomId: string}){
         return <Loading />
     }
 
-    //TODO: show the canvas here
     return (
         <>
-            Show the paid canvas
+            <ClosedCanvas roomId={roomId} socket={socket} />
         </>
     )
 }
