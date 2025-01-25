@@ -1,57 +1,72 @@
-import {useRef, useState, useEffect} from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { FreeGame } from '@/app/draw/FreeGame';
-import {IconButton} from './IconButton'
-import { Circle, Pencil, RectangleHorizontalIcon, Eraser, ZoomIn, ZoomOut, Move } from "lucide-react";
+import { IconButton } from './IconButton';
+import { Circle, Pencil, RectangleHorizontalIcon, Eraser, ZoomIn, ZoomOut, Move, TextSelect} from 'lucide-react';
 
-export type Tool = "circle" | "rect" | "pencil" | "eraser" | "pan" | "zoom-in" | "zoom-out";
+export type Tool = 'circle' | 'rect' | 'pencil' | 'eraser' | 'pan' | 'zoom-in' | 'zoom-out' | 'select';
 
-export function OpenCanvas(){
+export function OpenCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [game, setGame] = useState<FreeGame>();
-    const [selectedTool, setSelectedTool] = useState<Tool>("rect");
-    const [panOffset, setPanOffset] = useState({x: 0, y: 0})
+    const [game, setGame] = useState<FreeGame | null>(null);
+    const [selectedTool, setSelectedTool] = useState<Tool>('pencil');
 
+    // Initialize the game when the canvas ref is available
     useEffect(() => {
-        game?.setTool(selectedTool);
-    }, [selectedTool, game]);
-
-    useEffect(() => {
-        if(canvasRef.current){
+        if (canvasRef.current) {
             const currentGame = new FreeGame(canvasRef.current);
             setGame(currentGame);
         }
-    }, [canvasRef]);
+    }, [canvasRef.current]);
 
-    return (    
+    // Update the selected tool in the game instance
+    useEffect(() => {
+        if (game) {
+            game.setTool(selectedTool);
+        }
+    }, [selectedTool, game]);
+
+    // Cleanup the game instance when the component unmounts
+    useEffect(() => {
+        return () => {
+            if (game) {
+                game.destroy();
+            }
+        };
+    }, [game]);
+
+    return (
         <div className="h-[100vh] overflow-hidden">
-            <canvas 
-                ref={canvasRef} 
-                width={window.innerWidth} 
+            <canvas
+                ref={canvasRef}
+                width={window.innerWidth}
                 height={window.innerHeight}
                 className="touch-none"
             />
-            <Toolbar 
-                setSelectedTool={setSelectedTool} 
+            <Toolbar
                 selectedTool={selectedTool}
+                setSelectedTool={setSelectedTool}
             />
         </div>
-    )
+    );
 }
 
-function Toolbar({selectedTool, setSelectedTool}: {
-    selectedTool: Tool,
-    setSelectedTool: (currentTool: Tool) => void
-}){
+function Toolbar({
+    selectedTool,
+    setSelectedTool,
+}: {
+    selectedTool: Tool;
+    setSelectedTool: (tool: Tool) => void;
+}) {
     return (
         <div className="fixed top-10 left-10">
             <div className="flex gap-2 bg-black/20 backdrop-blur-sm p-2 rounded-lg">
                 <IconButton
-                    onClick={() => setSelectedTool("pencil")}
-                    activated={selectedTool==="pencil"}
+                    onClick={() => setSelectedTool('pencil')}
+                    activated={selectedTool === 'pencil'}
                     icon={<Pencil />}
                 />
                 <IconButton
-                    onClick={() => setSelectedTool("circle")}
+                    onClick={() => setSelectedTool('circle')}
                     activated={selectedTool === 'circle'}
                     icon={<Circle />}
                 />
@@ -80,7 +95,12 @@ function Toolbar({selectedTool, setSelectedTool}: {
                     activated={selectedTool === 'zoom-out'}
                     icon={<ZoomOut />}
                 />
+                <IconButton
+                    onClick={() => setSelectedTool('select')}
+                    activated={selectedTool === 'select'}
+                    icon={<TextSelect />}
+                />
             </div>
         </div>
-    )
+    );
 }

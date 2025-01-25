@@ -4,11 +4,13 @@ import {middleware} from './middleware'
 import { CreateUserSchema, SignInSchema, CreateRoomSchema } from '@repo/common/zod';
 import { JWT_SECRET } from '@repo/backend-common/config';
 import { prismaClient } from '@repo/db-package/prisma';
-
+import cors from 'cors';
 
 const app = express();
 
 app.use(express.json());
+
+app.use(cors({origin: 'http://localhost:3000'}));
 
 app.post("/api/signup", async (req, res) => {
     console.log(req.body)
@@ -80,7 +82,7 @@ app.post("/api/create-room", middleware, async (req, res) => {
         return;
     };
 
-    //@ts-ignore TODO; fix this
+    //@ts-ignore 
     const userId = req.userId
     console.log(userId);
     //TODO: Send DB the cred to create a room!!
@@ -95,11 +97,49 @@ app.post("/api/create-room", middleware, async (req, res) => {
 
         res.status(201).json({
             message: "room created",
-            roomId: room.id
+            data: {
+                roomId: room.id
+            }
         });
     } catch(error){
         res.status(500).json({message: "Room was not created due to an error: ", error: error});
     }
+})
+
+app.get("/api/chats/:roomId", middleware, async (req, res) => {
+    try {
+        const roomId = Number(req.params.roomId);
+        const messages = await prismaClient.chat.findMany({
+            where: {
+                roomId: roomId
+            },
+            orderBy: {
+                id: "desc"
+            },
+            take: 1000
+        });
+
+        res.json({
+            messages
+        })
+    } catch(e) {
+        console.log(e);
+        res.json({
+            messages: []
+        })
+    }
+    
+})
+
+app.get("/api/room/:slug", middleware, async (req, res) => {
+    const slug = req.params.slug;
+    const room = await prismaClient.room.findFirst({
+        where: {
+            slug
+        }
+    });
+    console.log(room);
+    res.json(room);
 })
 
 app.listen(3001, () => {

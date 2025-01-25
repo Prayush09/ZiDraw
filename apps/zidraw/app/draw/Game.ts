@@ -1,5 +1,6 @@
 import { Tool } from '@/components/Canvas/ClosedCanvas'
 import { getExistingShapes } from './http';
+//Implement Pencil, Eraser and make sure no funny busiess is happening...
 
 type Shape = {
     type: "rect";
@@ -118,7 +119,7 @@ export class Game {
                 this.ctx.strokeRect(this.startX, this.startY, width, height);
             }else   
                 if(selectedTool === 'circle'){
-                    const radius = Math.max(width, height)/2;
+                    const radius = Math.abs(Math.max(width, height)/2);
                     const centerX = this.startX + radius;
                     const centerY = this.startY + radius;
                     this.ctx.beginPath();
@@ -154,7 +155,7 @@ export class Game {
             }
         } else  
             if(selectedTool === 'circle'){
-                const radius = Math.max(width, height)/2;
+                const radius = Math.abs(Math.max(width, height)/2);
                 shape = {
                     type: 'circle',
                     radius: radius,
@@ -191,3 +192,9 @@ export class Game {
 
     
 }
+
+//TODO: MAKE PENCIL WORK
+//TODO: MAKE ERASER WORK
+
+//TODO: MAKE PAN WORK
+//TODO: MAKE ZOOM IN AND OUT WORK.. AND MAKE A DIFFERENT DIV FOR THAT IN THE LOWER RIGHT CORNER
