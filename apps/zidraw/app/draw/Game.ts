@@ -129,24 +129,25 @@ export class Game {
     
             // Draw all rectangles in one path
             if (rects.length > 0) {
-                this.bufferCtx.beginPath();
                 rects.forEach(shape => {
                     if (shape.type === 'rect') {
+                        this.bufferCtx.beginPath();
                         this.bufferCtx.rect(shape.x, shape.y, shape.width, shape.height);
+                        this.bufferCtx.stroke();
                     }
                 });
-                this.bufferCtx.stroke();
+                
             }
     
             // Draw all circles in one path
             if (circles.length > 0) {
-                this.bufferCtx.beginPath();
                 circles.forEach(shape => {
                     if (shape.type === 'circle') {
+                        this.bufferCtx.beginPath();
                         this.bufferCtx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
+                        this.bufferCtx.stroke();
                     }
                 });
-                this.bufferCtx.stroke();
             }
     
             // Draw pencil paths from existing shapes
