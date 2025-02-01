@@ -1,5 +1,5 @@
 import { Tool } from '@/components/Canvas/ClosedCanvas'
-import { getExistingShapes } from './http';
+import { getExistingShapes, canvasCleared } from './http';
 //Implement Pencil, Eraser and make sure no funny busiess is happening...
 
 type Shape = {
@@ -19,6 +19,12 @@ type Shape = {
     startY: number;
     endX: number;
     endY: number;
+} | {
+    type: "clear Canvas";
+    startX: 0;
+    startY: 0;
+    endX: number;
+    endY: number;
 }
 
 export class Game {
@@ -30,6 +36,7 @@ export class Game {
     private startX = 0;
     private startY = 0;
     private selectedTool: Tool = "circle";
+    private canvasCleared = false;
     socket: WebSocket;
 
     constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket){
@@ -60,32 +67,43 @@ export class Game {
         this.canvas.removeEventListener("mousemove", this.mouseMoveHandler);
     }
 
-    setTool(tool: "circle" | "rect" | "pencil"){
+    setTool(tool: "circle" | "rect" | "pencil"| "clear canvas"){
         this.selectedTool = tool;
     }
 
-    clearCanvas(){
+    clearCanvas() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.fillStyle = "rgba(0,0,0)"
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.existingShapes.forEach((shape) => {
-            if(shape.type === 'rect'){
-                this.ctx.strokeStyle = "rgba(255, 255, 255)"
-                this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-            } else  
-                if(shape.type === 'circle'){
-                    this.ctx.strokeStyle = "rgba(255, 255, 255)"
+        if(this.canvasCleared){
+            this.ctx.fillStyle = "rgba(0,0,0)";
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+        
+        if (!this.canvasCleared) {
+            this.ctx.fillStyle = "rgba(0,0,0)";
+            this.ctx.fillRect(0,0,this.canvas.width, this.canvas.height);
+            this.existingShapes.forEach((shape) => {
+                if (shape.type === 'rect') {
+                    this.ctx.strokeStyle = "rgba(255, 255, 255)";
+                    this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+                } else if (shape.type === 'circle') {
+                    this.ctx.strokeStyle = "rgba(255, 255, 255)";
                     this.ctx.beginPath();
                     this.ctx.arc(shape.centerX, shape.centerY, Math.abs(shape.radius), 0, Math.PI * 2);
                     this.ctx.stroke();
                     this.ctx.closePath();
                 }
-        })
+            });
+        }
     }
 
     async init(){
         this.existingShapes = await getExistingShapes(this.roomId);
+        if(this.existingShapes.length === 0){
+            this.canvasCleared = true;
+        }else{
+            this.canvasCleared = false;
+        }
         this.clearCanvas();
     }
 
@@ -163,7 +181,8 @@ export class Game {
                     centerY: this.startY + radius,
                 }
             }
-        else{
+        else
+            if(selectedTool == 'pencil'){
             shape = {
                 type: 'pencil',
                 startX: this.startX,
@@ -172,7 +191,14 @@ export class Game {
                 endY: e.clientY
             }
         }
-
+        if (selectedTool === 'clear canvas') {
+            this.canvasCleared = true;  
+            this.clearCanvas();
+            this.existingShapes = [];
+            canvasCleared(this.roomId);
+            return;
+        }
+        this.canvasCleared = false;  
         if(!shape){
             return;
         }

@@ -1,10 +1,10 @@
 import {useRef, useState, useEffect} from 'react';
 import { Game } from '@/app/draw/Game';
 import {IconButton} from './IconButton'
-import { Circle, Pencil, RectangleHorizontalIcon } from "lucide-react";
+import { Circle, Pencil, RectangleHorizontalIcon, ClipboardX } from "lucide-react";
 
 
-export type Tool = "circle" | "rect" | "pencil";
+export type Tool = "circle" | "rect" | "pencil" | "clear canvas";
 
 export function ClosedCanvas({
     roomId,
@@ -73,6 +73,13 @@ function Toolbar({selectedTool, setSelectedTool}: {
                     }}
                     activated={selectedTool === 'rect'}
                     icon = {<RectangleHorizontalIcon />}
+                />
+                <IconButton
+                    onClick={() => {
+                        setSelectedTool('clear canvas');
+                    }}
+                    activated={selectedTool === 'clear canvas'}
+                    icon = {<ClipboardX />}
                 />
             </div>
         </div>

@@ -85,7 +85,6 @@ app.post("/api/create-room", middleware, async (req, res) => {
     //@ts-ignore 
     const userId = req.userId
     console.log(userId);
-    //TODO: Send DB the cred to create a room!!
     try
     {
         const room = await prismaClient.room.create({
@@ -142,6 +141,32 @@ app.get("/api/room/:slug", middleware, async (req, res) => {
     res.json(room);
 })
 
+app.post("/api/chat/delete", middleware, async (req, res) => {
+    console.log("controller here!")
+    const roomId = Number(req.body.roomId);
+    try{
+    const result  = await prismaClient.chat.deleteMany({
+        where: {
+            roomId: roomId
+        }
+    })
+
+    console.log("Canvas is cleared");
+    res.json({
+        message: "Cleared the canvas",
+        result
+    })
+    } catch(err){
+        console.error(err);
+        res.status(409).json({
+            message: "something went wrong"
+        })
+    }
+})
+
+
 app.listen(3001, () => {
     console.log("Server started at 3001");
 });
+
+

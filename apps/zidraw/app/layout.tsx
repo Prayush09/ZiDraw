@@ -9,12 +9,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
 
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(()=>{
-        setIsLoading(false);
-  }, [])
-
+  
   return (
     <html lang="en">
       <head>
@@ -24,7 +19,7 @@ export default function RootLayout({
         <link rel='icon' href='/next.svg' />
       </head>
       <body>
-        {isLoading ? <Loading/> : children}
+        {children}
       </body>
     </html>
   );

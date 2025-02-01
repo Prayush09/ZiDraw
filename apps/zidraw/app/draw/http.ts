@@ -1,5 +1,6 @@
 import { BACKEND_URL } from "@/config";
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import {prismaClient} from '../../../../packages/db-package/src/index'
 
 export async function getExistingShapes(roomId: string){
     console.log(roomId);
@@ -57,6 +58,27 @@ export async function join_Room(roomName: string){
         
         return response.data;
     }catch(error){
+        console.error(error);
+    }
+}
+
+
+export async function canvasCleared(roomId: string){
+    try{
+        
+        const deleteReq = await axios.post(
+            `${BACKEND_URL}/api/chat/delete`, 
+            {
+            roomId: roomId
+            } ,{
+            headers:{
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+        })
+
+        console.log("canvas cleared from DB");
+        console.log(deleteReq);
+    } catch(error){
         console.error(error);
     }
 }

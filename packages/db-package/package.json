@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "exports":{
+  "exports": {
     "./prisma": "./src/index.ts"
   },
   "devDependencies": {
@@ -20,6 +20,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@prisma/client": "6.2.1"
+    "@prisma/client": "6.2.1",
+    "dotenv": "^16.4.7"
   }
 }
