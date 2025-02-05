@@ -56,6 +56,7 @@ function Toolbar({selectedTool, setSelectedTool}: {
                     )}
                     activated={selectedTool==="pencil"}
                     icon={<Pencil />}
+                    name="Pencil"
                 />
 
                 <IconButton
@@ -64,6 +65,7 @@ function Toolbar({selectedTool, setSelectedTool}: {
                     }}
                     activated={selectedTool === 'circle'}
                     icon={<Circle />}
+                    name='Circle'
                 />
 
 
@@ -73,6 +75,7 @@ function Toolbar({selectedTool, setSelectedTool}: {
                     }}
                     activated={selectedTool === 'rect'}
                     icon = {<RectangleHorizontalIcon />}
+                    name="Rectangle"
                 />
                 <IconButton
                     onClick={() => {
@@ -80,6 +83,7 @@ function Toolbar({selectedTool, setSelectedTool}: {
                     }}
                     activated={selectedTool === 'clear canvas'}
                     icon = {<ClipboardX />}
+                    name="Clear Canvas"
                 />
                 <IconButton
                     onClick={() => {
@@ -87,6 +91,7 @@ function Toolbar({selectedTool, setSelectedTool}: {
                     }}
                     activated={selectedTool === 'eraser'}
                     icon = {<Eraser/>}
+                    name="Eraser"
                 />
             </div>
         </div>

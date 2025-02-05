@@ -13,7 +13,6 @@ export default function CreateRoom() {
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
       const response = await createRoom(name);
       console.log("Room created successfully:", response);

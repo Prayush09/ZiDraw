@@ -55,18 +55,16 @@ export class Game {
   private eraserPoints: { x: number; y: number }[] = []
   private animationFrameId: number | null = null
   private isDrawing = false
-  private isErasing = false
   private currentShape: Shape | null = null
   socket: WebSocket
 
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     this.canvas = canvas
     this.ctx = canvas.getContext("2d")!
+    this.ctx.fillStyle = 'transparent';
 
     // Enable image smoothing
     this.ctx.imageSmoothingEnabled = true
-
-    this.ctx.fillStyle = 'rgba(0,0,0,1)';
     this.existingShapes = []
     this.roomId = roomId
     this.socket = socket
@@ -163,6 +161,10 @@ export class Game {
   }
 
   clearCanvas() {
+    if(this.canvasCleared){
+        this.existingShapes = [];
+        this.canvasCleared = false;
+    }
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     this.renderShapes()
@@ -203,7 +205,11 @@ export class Game {
   initHandlers() {
     this.socket.onmessage = (event) => {
       const msg = JSON.parse(event.data)
-      if (msg.type === "chat") {
+
+      if(msg.type === 'clearCanvas'){
+        this.canvasCleared = true
+        this.clearCanvas();
+      } else if (msg.type === "chat") {
         const parsedShape = JSON.parse(msg.message)
         this.existingShapes.push(parsedShape.shape)
         this.clearCanvas()
@@ -280,7 +286,6 @@ export class Game {
         centerY: this.startY + radius,
       }
     } else if (this.selectedTool === "eraser") {
-      this.isErasing = true
       this.eraserPoints.push({ x: currentX, y: currentY })
       this.currentShape = {
         type: "eraser",
@@ -303,14 +308,23 @@ export class Game {
     const width = currentX - this.startX
     const height = currentY - this.startY
 
-    if (this.selectedTool === "clear canvas") {
-      this.canvasCleared = true
-      this.existingShapes = []
-      canvasCleared(this.roomId)
-      this.clearCanvas()
-      this.stopDrawing()
-      return
+    if (this.selectedTool === 'clear canvas') {
+        this.canvasCleared = true;
+        this.existingShapes = [];
+
+        canvasCleared(this.roomId);
+
+        this.socket.send(
+            JSON.stringify({
+                type: "clearCanvas",
+                roomId: this.roomId
+            })
+        )
+        this.clearCanvas()
+        this.stopDrawing()
+        return
     }
+
 
     let shape: Shape | null = null
 
@@ -348,7 +362,8 @@ export class Game {
         endY: currentY,
         points: this.pencilPoints,
       }
-    }
+    } 
+
 
     this.canvasCleared = false
     if (!shape) return
@@ -362,6 +377,8 @@ export class Game {
       }),
     )
 
+
+
     this.pencilPoints = []
     this.eraserPoints = []
     this.stopDrawing()
@@ -369,17 +386,25 @@ export class Game {
   }
 
   private renderErasePath(shape: Shape) {
-    if (shape.type !== "eraser" || !shape.points) return
-
+    if (shape.type !== "eraser" || !shape.points) return;
+  
+    const eraserSize = 20; // Adjust the eraser size as needed
+  
     this.ctx.save();
-
-    const eraserSize = 20 // You can adjust this value to change the eraser size
-
+    // You can change this if needed
+    this.ctx.globalCompositeOperation = 'destination-out';
+    this.ctx.fillStyle = 'black';
     shape.points.forEach((point) => {
-      this.ctx.clearRect(point.x - eraserSize / 2, point.y - eraserSize / 2, eraserSize, eraserSize)
-    })
-    
-    this.ctx.restore()
-  }
+      // Use fillRect to draw a solid block at each point
+      this.ctx.fillRect(
+        point.x - eraserSize / 2,
+        point.y - eraserSize / 2,
+        eraserSize,
+        eraserSize
+      );
+    });
+     
+    this.ctx.restore();
+  }  
 }
 

@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect } from 'react';
 import { FreeGame } from '@/app/draw/FreeGame';
 import { IconButton } from './IconButton';
-import { Circle, Pencil, RectangleHorizontalIcon, Eraser, ZoomIn, ZoomOut, Move, TextSelect} from 'lucide-react';
+import { Circle, Pencil, RectangleHorizontalIcon, Eraser, ClipboardX} from 'lucide-react';
 
-export type Tool = 'circle' | 'rect' | 'pencil' | 'eraser' | 'pan' | 'zoom-in' | 'zoom-out' | 'select';
+export type Tool = "circle" | "rect" | "pencil" | "clear canvas" | "eraser";
 
 export function OpenCanvas() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -59,46 +59,50 @@ function Toolbar({
 }) {
     return (
         <div className="fixed top-10 left-10">
-            <div className="flex gap-2 bg-black/20 backdrop-blur-sm p-2 rounded-lg">
+            <div className="flex gap-2">
+                
                 <IconButton
-                    onClick={() => setSelectedTool('pencil')}
-                    activated={selectedTool === 'pencil'}
+                    onClick={() => (
+                        setSelectedTool("pencil")
+                    )}
+                    activated={selectedTool==="pencil"}
                     icon={<Pencil />}
+                    name="Pencil"
                 />
+
                 <IconButton
-                    onClick={() => setSelectedTool('circle')}
+                    onClick={() => {
+                        setSelectedTool("circle")
+                    }}
                     activated={selectedTool === 'circle'}
                     icon={<Circle />}
+                    name='Circle'
                 />
+
+
                 <IconButton
-                    onClick={() => setSelectedTool('rect')}
+                    onClick={() => {
+                        setSelectedTool('rect');
+                    }}
                     activated={selectedTool === 'rect'}
-                    icon={<RectangleHorizontalIcon />}
+                    icon = {<RectangleHorizontalIcon />}
+                    name="Rectangle"
                 />
                 <IconButton
-                    onClick={() => setSelectedTool('eraser')}
+                    onClick={() => {
+                        setSelectedTool('clear canvas');
+                    }}
+                    activated={selectedTool === 'clear canvas'}
+                    icon = {<ClipboardX />}
+                    name="Clear Canvas"
+                />
+                <IconButton
+                    onClick={() => {
+                        setSelectedTool('eraser');
+                    }}
                     activated={selectedTool === 'eraser'}
-                    icon={<Eraser />}
-                />
-                <IconButton
-                    onClick={() => setSelectedTool('pan')}
-                    activated={selectedTool === 'pan'}
-                    icon={<Move />}
-                />
-                <IconButton
-                    onClick={() => setSelectedTool('zoom-in')}
-                    activated={selectedTool === 'zoom-in'}
-                    icon={<ZoomIn />}
-                />
-                <IconButton
-                    onClick={() => setSelectedTool('zoom-out')}
-                    activated={selectedTool === 'zoom-out'}
-                    icon={<ZoomOut />}
-                />
-                <IconButton
-                    onClick={() => setSelectedTool('select')}
-                    activated={selectedTool === 'select'}
-                    icon={<TextSelect />}
+                    icon = {<Eraser/>}
+                    name="Eraser"
                 />
             </div>
         </div>

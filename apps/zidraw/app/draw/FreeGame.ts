@@ -1,502 +1,358 @@
-import { Tool } from '@/components/Canvas/OpenCanvas';
- 
-type Shape = {
-    type: "rect" | "circle" | "pencil" | "eraser";
-    uuid: number;
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
-    centerX?: number;
-    centerY?: number;
-    radius?: number;
-    startX?: number;
-    startY?: number;
-    endX?: number;
-    endY?: number;
-    path?: {x: number; y: number}[];
-    selected?: boolean;
-}
+import type { Tool } from "@/components/Canvas/OpenCanvas"
+import { getExistingShapes, canvasCleared } from "./http"
 
-type ResizeHandle = "top" | "bottom" | "left" | "right" | "topLeft" | "topRight" | "bottomLeft" | "bottomRight" | null;
+type Shape =
+  | {
+      type: "rect"
+      x: number
+      y: number
+      width: number
+      height: number
+    }
+  | {
+      type: "circle"
+      centerX: number
+      centerY: number
+      radius: number
+    }
+  | {
+      type: "pencil"
+      startX: number
+      startY: number
+      previousX: number
+      previousY: number
+      endX: number
+      endY: number
+      points?: { x: number; y: number }[]
+    }
+  | {
+      type: "clear Canvas"
+      startX: 0
+      startY: 0
+      endX: number
+      endY: number
+    }
+  | {
+      type: "eraser"
+      startX: number
+      startY: number
+      points?: { x: number; y: number }[]
+    }
 
 export class FreeGame {
-    private canvas: HTMLCanvasElement;
-    private ctx: CanvasRenderingContext2D;
-    private clicked: boolean;
-    private startX = 0;
-    private startY = 0;
-    private selectedTool: Tool = "circle";
-    private shapes: Shape[] = [];
-    private selectedShape: Shape | null = null;
-    private resizeHandle: ResizeHandle = null;
-    private isDragging = false;
-    private dragOffsetX = 0;
-    private dragOffsetY = 0;
-    private isResizing = false;
+  private canvas: HTMLCanvasElement
+  private ctx: CanvasRenderingContext2D
+  private clicked: boolean
+  private startX = 0
+  private startY = 0
+  private previousX = 0
+  private previousY = 0
+  private selectedTool: Tool = "circle"
+  private canvasCleared = false
+  private pencilPoints: { x: number; y: number }[] = []
+  private eraserPoints: { x: number; y: number }[] = []
+  private animationFrameId: number | null = null
+  private isDrawing = false
+  private isErasing = false
+  private currentShape: Shape | null = null
 
-    constructor(canvas: HTMLCanvasElement){
-        this.canvas = canvas;
-        this.ctx = canvas.getContext("2d")!;
-        this.clicked = false;
-        this.loadShapesFromStorage();
-        this.init();
-        this.initMouseHandlers();
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas
+    this.ctx = canvas.getContext("2d")!
+    this.ctx.fillStyle = "black"
+
+    // Enable image smoothing
+    this.ctx.imageSmoothingEnabled = true
+    this.clicked = false
+
+    this.init()
+    this.initMouseHandlers()
+  }
+
+  private throttle = (fn: Function, delay: number) => {
+    let lastCall = 0
+    return (...args: any[]) => {
+      const now = Date.now()
+      if (now - lastCall >= delay) {
+        fn.apply(this, args)
+        lastCall = now
+      }
     }
+  }
 
-    private generateUUID(){
-        return Math.floor(Math.random() * 1000000000);
+  initMouseHandlers() {
+    this.canvas.addEventListener("mousedown", this.mouseDownHandler)
+    this.canvas.addEventListener("mouseup", this.mouseUpHandler)
+    this.canvas.addEventListener(
+      "mousemove",
+      this.throttle(this.mouseMoveHandler.bind(this), 16)
+    )
+    this.canvas.addEventListener("mouseleave", this.mouseUpHandler)
+  }
+
+  destroy() {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId)
     }
+    this.canvas.removeEventListener("mousedown", this.mouseDownHandler)
+    this.canvas.removeEventListener("mouseup", this.mouseUpHandler)
+    this.canvas.removeEventListener("mousemove", this.mouseMoveHandler)
+    this.canvas.removeEventListener("mouseleave", this.mouseUpHandler)
+  }
 
-    private saveShapesToStorage() {
-        localStorage.setItem('canvasShapes', JSON.stringify(this.shapes));
-    }
+  setTool(tool: Tool) {
+    this.selectedTool = tool
+  }
 
-    private loadShapesFromStorage() {
-        const storedShapes = localStorage.getItem('canvasShapes');
-        if (storedShapes) {
-            try {
-                const parsedShapes: Shape[] = JSON.parse(storedShapes);
-                this.shapes = parsedShapes.filter((shape) => {
-                    if (shape.type === "pencil") {
-                        return shape.path && Array.isArray(shape.path);
-                    }
-                    return true; 
-                });
-                this.redrawShapes();
-            } catch (err) {
-                console.error("Failed to load shapes from storage:", err);
-                this.shapes = [];
-            }
+  private renderShapes() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    // Fill the canvas background
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+
+    if (!this.canvasCleared) {
+      this.ctx.strokeStyle = "rgba(255, 255, 255)"
+      this.ctx.lineWidth = 3
+
+      if (this.currentShape) {
+        this.ctx.strokeStyle = "rgba(255, 255, 255)"
+        this.ctx.lineWidth = 3
+
+        if (this.currentShape.type === "eraser") {
+          this.renderErasePath(this.currentShape)
+        } else if (this.currentShape.type === "rect") {
+          this.ctx.strokeRect(
+            this.currentShape.x,
+            this.currentShape.y,
+            this.currentShape.width,
+            this.currentShape.height,
+          )
+        } else if (this.currentShape.type === "circle") {
+          this.ctx.beginPath()
+          this.ctx.arc(
+            this.currentShape.centerX,
+            this.currentShape.centerY,
+            this.currentShape.radius,
+            0,
+            Math.PI * 2
+          )
+          this.ctx.stroke()
+        } else if (this.currentShape.type === "pencil") {
+          this.renderPencilPath(this.currentShape)
         }
+      }
+    }
+  }
+
+  private render = () => {
+    if (this.isDrawing) {
+      this.renderShapes()
+      this.animationFrameId = requestAnimationFrame(this.render)
+    }
+  }
+
+  clearCanvas() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+    this.renderShapes()
+  }
+
+  renderPencilPath(shape: Shape) {
+    if (shape.type !== "pencil") return
+
+    this.ctx.beginPath()
+    this.ctx.strokeStyle = "rgba(255, 255, 255)"
+    this.ctx.lineWidth = 3
+    this.ctx.lineCap = "round"
+    this.ctx.lineJoin = "round"
+
+    if (shape.points && shape.points.length > 1) {
+      const points = shape.points
+      this.ctx.moveTo(points[0].x, points[0].y)
+
+      for (let i = 1; i < points.length - 1; i++) {
+        const xc = (points[i].x + points[i + 1].x) / 2
+        const yc = (points[i].y + points[i + 1].y) / 2
+        this.ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc)
+      }
+    } else {
+      this.ctx.moveTo(shape.startX, shape.startY)
+      this.ctx.lineTo(shape.endX, shape.endY)
     }
 
-    private isPointInShape(x: number, y: number, shape: Shape): boolean {
-        switch (shape.type) {
-            case "rect":
-                // Ensure point is strictly within the rectangle's boundaries
-                return x > shape.x! && x < shape.x! + shape.width! &&
-                       y > shape.y! && y < shape.y! + shape.height!;
-            case "circle":
-                // Ensure point is strictly within the circle's radius
-                const dx = x - shape.centerX!;
-                const dy = y - shape.centerY!;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                return distance < shape.radius!;
-            case "pencil":
-                if (shape.path) {
-                    return shape.path.some(point => {
-                        const dx = x - point.x;
-                        const dy = y - point.y;
-                        return Math.sqrt(dx * dx + dy * dy) <= 5;
-                    });
-                }
-                return false;
-            default:
-                return false;
-        }
+    this.ctx.stroke()
+  }
+
+  private renderErasePath(shape: Shape) {
+    if (shape.type !== "eraser" || !shape.points) return
+  
+    const eraserSize = 20 // Adjust the eraser size as needed
+  
+    this.ctx.save()
+    // Set composite operation so drawing will remove pixels
+    this.ctx.globalCompositeOperation = "destination-out"
+    shape.points.forEach((point) => {
+      // Draw a solid block at each point to mimic erasing
+      this.ctx.fillRect(
+        point.x - eraserSize / 2,
+        point.y - eraserSize / 2,
+        eraserSize,
+        eraserSize
+      )
+    })
+    this.ctx.restore()
+  }
+
+  async init() {
+    this.clearCanvas()
+  }
+
+  // Removed socket initialization since we're only focusing on canvas logic
+
+  private startDrawing() {
+    this.isDrawing = true
+    this.render()
+  }
+
+  private stopDrawing() {
+    this.isDrawing = false
+    this.currentShape = null
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId)
+      this.animationFrameId = null
+    }
+  }
+
+  mouseDownHandler = (e: MouseEvent): void => {
+    this.clicked = true
+    this.startY = e.clientY - this.canvas.offsetTop
+    this.startX = e.clientX - this.canvas.offsetLeft
+    this.previousX = this.startX
+    this.previousY = this.startY
+
+    if (this.selectedTool === "pencil") {
+      this.pencilPoints = [{ x: this.startX, y: this.startY }]
     }
 
-    private getResizeHandle(x: number, y: number, shape: Shape): ResizeHandle {
-        if (shape.type !== "rect") return null;
-
-        const handleSize = 8;
-        const handles = [
-            { type: "topLeft", x: shape.x!, y: shape.y! },
-            { type: "topRight", x: shape.x! + shape.width!, y: shape.y! },
-            { type: "bottomLeft", x: shape.x!, y: shape.y! + shape.height! },
-            { type: "bottomRight", x: shape.x! + shape.width!, y: shape.y! + shape.height! },
-            { type: "top", x: shape.x! + shape.width! / 2, y: shape.y! },
-            { type: "bottom", x: shape.x! + shape.width! / 2, y: shape.y! + shape.height! },
-            { type: "left", x: shape.x!, y: shape.y! + shape.height! / 2 },
-            { type: "right", x: shape.x! + shape.width!, y: shape.y! + shape.height! / 2 }
-        ];
-
-        for (const handle of handles) {
-            if (Math.abs(x - handle.x) <= handleSize && Math.abs(y - handle.y) <= handleSize) {
-                return handle.type as ResizeHandle;
-            }
-        }
-
-        return null;
+    if (this.selectedTool === "eraser") {
+      this.eraserPoints = [{ x: this.startX, y: this.startY }]
     }
 
-    private drawResizeHandles(shape: Shape) {
-        if (shape.type !== "rect" || !shape.selected) return;
+    this.startDrawing()
+  }
 
-        const handleSize = 8;
-        this.ctx.fillStyle = "#ffffff";
-        
-        // Corner handles
-        [
-            [shape.x!, shape.y!],
-            [shape.x! + shape.width!, shape.y!],
-            [shape.x!, shape.y! + shape.height!],
-            [shape.x! + shape.width!, shape.y! + shape.height!]
-        ].forEach(([x, y]) => {
-            this.ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
-        });
+  mouseMoveHandler = (e: MouseEvent): void => {
+    if (!this.clicked) return
 
-        // Edge handles
-        [
-            [shape.x! + shape.width!/2, shape.y!],
-            [shape.x! + shape.width!/2, shape.y! + shape.height!],
-            [shape.x!, shape.y! + shape.height!/2],
-            [shape.x! + shape.width!, shape.y! + shape.height!/2]
-        ].forEach(([x, y]) => {
-            this.ctx.fillRect(x - handleSize/2, y - handleSize/2, handleSize, handleSize);
-        });
+    const currentX = e.clientX - this.canvas.offsetLeft
+    const currentY = e.clientY - this.canvas.offsetTop
+    const width = currentX - this.startX
+    const height = currentY - this.startY
+
+    if (this.selectedTool === "pencil") {
+      this.pencilPoints.push({ x: currentX, y: currentY })
+      this.currentShape = {
+        type: "pencil",
+        startX: this.startX,
+        startY: this.startY,
+        previousX: this.previousX,
+        previousY: this.previousY,
+        endX: currentX,
+        endY: currentY,
+        points: this.pencilPoints,
+      }
+    } else if (this.selectedTool === "rect") {
+      this.currentShape = {
+        type: "rect",
+        x: this.startX,
+        y: this.startY,
+        width,
+        height,
+      }
+    } else if (this.selectedTool === "circle") {
+      const radius = Math.abs(Math.max(width, height) / 2)
+      this.currentShape = {
+        type: "circle",
+        radius,
+        centerX: this.startX + radius,
+        centerY: this.startY + radius,
+      }
+    } else if (this.selectedTool === "eraser") {
+      this.isErasing = true
+      this.eraserPoints.push({ x: currentX, y: currentY })
+      this.currentShape = {
+        type: "eraser",
+        startX: this.startX,
+        startY: this.startY,
+        points: this.eraserPoints,
+      }
     }
 
-    private redrawShapes() {
-        this.clearCanvas();
-        this.ctx.strokeStyle = "rgba(255, 255, 255)";
-        this.shapes.forEach((shape) => {
-            this.ctx.strokeStyle = shape.selected ? "#00ff00" : "rgba(255, 255, 255)";
-            
-            switch (shape.type) {
-                case "rect":
-                    this.ctx.strokeRect(shape.x!, shape.y!, shape.width!, shape.height!);
-                    if (shape.selected) {
-                        this.drawResizeHandles(shape);
-                    }
-                    break;
-                case "circle":
-                    this.ctx.beginPath();
-                    this.ctx.arc(shape.centerX!, shape.centerY!, shape.radius!, 0, Math.PI * 2);
-                    this.ctx.stroke();
-                    this.ctx.closePath();
-                    break;
-                case "pencil":
-                    if (shape.path && shape.path.length > 0) {
-                        this.ctx.beginPath();
-                        shape.path.forEach((point, index) => {
-                            if (index === 0) {
-                                this.ctx.moveTo(point.x, point.y);
-                            } else {
-                                this.ctx.lineTo(point.x, point.y);
-                            }
-                        });
-                        this.ctx.stroke();
-                        this.ctx.closePath();
-                    }
-                    break;        
-            }
-        });
+    this.previousX = currentX
+    this.previousY = currentY
+  }
+
+  mouseUpHandler = (e: MouseEvent): void => {
+    if (!this.clicked) return
+
+    this.clicked = false
+    const currentX = e.clientX - this.canvas.offsetLeft
+    const currentY = e.clientY - this.canvas.offsetTop
+    const width = currentX - this.startX
+    const height = currentY - this.startY
+
+    if (this.selectedTool === "clear canvas") {
+      this.canvasCleared = true
+      // Optionally call canvasCleared(this.roomId) if needed for HTTP logic
+      this.clearCanvas()
+      this.stopDrawing()
+      return
     }
 
-    initMouseHandlers(){
-        this.canvas.addEventListener("mousedown", this.mouseDownHandler);
-        this.canvas.addEventListener("mouseup", this.mouseUpHandler);
-        this.canvas.addEventListener("mousemove", this.mouseMoveHandler);
+    let shape: Shape | null = null
+
+    if (this.selectedTool === "rect") {
+      shape = {
+        type: "rect",
+        x: this.startX,
+        y: this.startY,
+        width,
+        height,
+      }
+    } else if (this.selectedTool === "circle") {
+      const radius = Math.abs(Math.max(width, height) / 2)
+      shape = {
+        type: "circle",
+        radius,
+        centerX: this.startX + radius,
+        centerY: this.startY + radius,
+      }
+    } else if (this.selectedTool === "eraser") {
+      shape = {
+        type: "eraser",
+        startX: this.startX,
+        startY: this.startY,
+        points: this.eraserPoints,
+      }
+    } else if (this.selectedTool === "pencil") {
+      shape = {
+        type: "pencil",
+        startX: this.startX,
+        startY: this.startY,
+        previousX: this.previousX,
+        previousY: this.previousY,
+        endX: currentX,
+        endY: currentY,
+        points: this.pencilPoints,
+      }
     }
 
-    destroy(){
-        this.canvas.removeEventListener("mousedown", this.mouseDownHandler);
-        this.canvas.removeEventListener("mouseup", this.mouseUpHandler);
-        this.canvas.removeEventListener("mousemove", this.mouseMoveHandler);
-    }
+    this.canvasCleared = false
+    if (!shape) return
 
-    setTool(tool: Tool){
-        this.selectedTool = tool;
-        if (this.selectedShape) {
-            this.selectedShape.selected = false;
-            this.selectedShape = null;
-            this.redrawShapes();
-        }
-    }
-
-    clearCanvas(){
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.fillStyle = "rgba(0,0,0)";
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    }
-
-    async init(){
-        this.clearCanvas();
-    }
-
-    mouseDownHandler = (e: MouseEvent): void => {
-        const x = e.clientX;
-        const y = e.clientY;
-        const rect = this.canvas.getBoundingClientRect();
-        const canvasX = x - rect.left;
-        const canvasY = y - rect.top;
-    
-        if (this.selectedTool === "select") {
-            let shapeFound = false;
-    
-            // Check for shape selection with precise boundary checks
-            for (let i = this.shapes.length - 1; i >= 0; i--) {
-                if (this.isPointInShape(canvasX, canvasY, this.shapes[i])) {
-                    shapeFound = true;
-                    
-                    // Check for resize handles first if there's a previous selected shape
-                    if (this.selectedShape) {
-                        this.resizeHandle = this.getResizeHandle(canvasX, canvasY, this.selectedShape);
-                        if (this.resizeHandle) {
-                            this.isResizing = true;
-                            this.startX = canvasX;
-                            this.startY = canvasY;
-                            return;
-                        }
-                    }
-    
-                    // Deselect previous shape and select new shape
-                    if (this.selectedShape) {
-                        this.selectedShape.selected = false;
-                    }
-                    this.selectedShape = this.shapes[i];
-                    this.selectedShape.selected = true;
-                    this.isDragging = true;
-                    
-                    // Calculate drag offset based on shape type
-                    this.dragOffsetX = canvasX - (this.selectedShape.type === "rect" ? this.selectedShape.x! : this.selectedShape.centerX!);
-                    this.dragOffsetY = canvasY - (this.selectedShape.type === "rect" ? this.selectedShape.y! : this.selectedShape.centerY!);
-                    
-                    this.redrawShapes();
-                    break;
-                }
-            }
-    
-            // If no shape is found, deselect any previously selected shape
-            if (!shapeFound && this.selectedShape) {
-                this.selectedShape.selected = false;
-                this.selectedShape = null;
-                this.redrawShapes();
-            }
-        } else {
-            // Drawing logic remains the same, but use canvas coordinates
-            this.clicked = true;
-            this.startX = canvasX;
-            this.startY = canvasY;
-    
-            if(this.selectedTool === "pencil"){
-                this.shapes.push({
-                    type: "pencil",
-                    path: [{x: canvasX, y: canvasY}],
-                    uuid: this.generateUUID()
-                });
-            }
-            else if(this.selectedTool === 'circle'){
-                this.shapes.push({
-                    type: "circle",
-                    centerX: canvasX,
-                    centerY: canvasY,
-                    radius: 0,
-                    uuid: this.generateUUID()
-                });
-            }
-            else if(this.selectedTool === 'rect'){
-                this.shapes.push({
-                    type: "rect",
-                    x: canvasX,
-                    y: canvasY,
-                    width: 0,
-                    height: 0,
-                    uuid: this.generateUUID()
-                });
-            }
-        }
-    }
-
-    mouseMoveHandler = (e: MouseEvent): void => {
-        const rect = this.canvas.getBoundingClientRect
-        const x = e.clientX;
-        const y = e.clientY;
-
-        if (this.selectedTool === "select" && this.selectedShape) {
-            if (this.isResizing && this.resizeHandle) {
-                const deltaX = x - this.startX;
-                const deltaY = y - this.startY;
-
-                switch (this.resizeHandle) {
-                    case "topLeft":
-                        this.selectedShape.x! += deltaX;
-                        this.selectedShape.y! += deltaY;
-                        this.selectedShape.width! -= deltaX;
-                        this.selectedShape.height! -= deltaY;
-                        break;
-                    case "topRight":
-                        this.selectedShape.y! += deltaY;
-                        this.selectedShape.width! = x - this.selectedShape.x!;
-                        this.selectedShape.height! -= deltaY;
-                        break;
-                    case "bottomLeft":
-                        this.selectedShape.x! += deltaX;
-                        this.selectedShape.width! -= deltaX;
-                        this.selectedShape.height! = y - this.selectedShape.y!;
-                        break;
-                    case "bottomRight":
-                        this.selectedShape.width! = x - this.selectedShape.x!;
-                        this.selectedShape.height! = y - this.selectedShape.y!;
-                        break;
-                    case "top":
-                        this.selectedShape.y! += deltaY;
-                        this.selectedShape.height! -= deltaY;
-                        break;
-                    case "bottom":
-                        this.selectedShape.height! = y - this.selectedShape.y!;
-                        break;
-                    case "left":
-                        this.selectedShape.x! += deltaX;
-                        this.selectedShape.width! -= deltaX;
-                        break;
-                    case "right":
-                        this.selectedShape.width! = x - this.selectedShape.x!;
-                        break;
-                }
-
-                this.startX = x;
-                this.startY = y;
-                this.redrawShapes();
-            } else if (this.isDragging) {
-                if (this.selectedShape.type === "rect") {
-                    this.selectedShape.x = x - this.dragOffsetX;
-                    this.selectedShape.y = y - this.dragOffsetY;
-                } else if (this.selectedShape.type === "circle") {
-                    this.selectedShape.centerX = x - this.dragOffsetX;
-                    this.selectedShape.centerY = y - this.dragOffsetY;
-                }
-                this.redrawShapes();
-            }
-        } else if (this.clicked && !this.isResizing && this.selectedTool !== "select") {
-            // Only draw new shapes if we're not resizing
-            this.clearCanvas();
-            this.redrawShapes();
-            this.ctx.strokeStyle = "rgba(255, 255, 255)";
-    
-            switch (this.selectedTool) {
-                case "rect":
-                    const width = x - this.startX;
-                    const height = y - this.startY;
-                    this.ctx.strokeRect(this.startX, this.startY, width, height);
-                    break;
-                case "circle":
-                    const radius = Math.abs(Math.max(
-                        x - this.startX,
-                        y - this.startY
-                    ) / 2);
-                    const centerX = this.startX + radius;
-                    const centerY = this.startY + radius;
-                    this.ctx.beginPath();
-                    this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                    this.ctx.stroke();
-                    this.ctx.closePath();
-                    break;
-                case "pencil":
-                    const currentShape = this.shapes[this.shapes.length - 1];
-                    if (currentShape && currentShape.type === "pencil") {
-                        currentShape.path!.push({ x, y }); 
-                        this.ctx.beginPath();
-                        currentShape.path!.forEach((point, index) => {
-                            if (index === 0) {
-                                this.ctx.moveTo(point.x, point.y);
-                            } else {
-                                this.ctx.lineTo(point.x, point.y);
-                            }
-                        });
-                        this.ctx.stroke();
-                    }
-                    break;
-                case "eraser":
-                    const eraserRadius = 10; 
-                    this.shapes = this.shapes.filter((shape) => {
-                        switch (shape.type) {
-                            case "rect": {
-                                const rectRight = shape.x! + shape.width!;
-                                const rectBottom = shape.y! + shape.height!;
-                                const intersects =
-                                    x + eraserRadius > shape.x! &&
-                                    x - eraserRadius < rectRight &&
-                                    y + eraserRadius > shape.y! &&
-                                    y - eraserRadius < rectBottom;
-                                localStorage.removeItem(shape.type)
-                                return !intersects; 
-                            }
-                            case "circle": {
-                                const dx = x - shape.centerX!;
-                                const dy = y - shape.centerY!;
-                                const distance = Math.sqrt(dx * dx + dy * dy);
-                                return distance > shape.radius! + eraserRadius;
-                            }
-                            case "pencil": {
-                                if (shape.path) {
-                                    return !shape.path.some((point) => {
-                                        const dx = x - point.x;
-                                        const dy = y - point.y;
-                                        return Math.sqrt(dx * dx + dy * dy) <= eraserRadius;
-                                    });
-                                }
-                                return true;
-                            }
-                            default:
-                                return true;
-                        }
-                    });
-                    this.clearCanvas();
-                    this.redrawShapes();
-                    this.saveShapesToStorage();
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
-
-    mouseUpHandler = (e: MouseEvent): void => {
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-    
-        if (this.isResizing || this.isDragging) {
-            // If we were resizing or dragging, just save the current state
-            this.saveShapesToStorage();
-        } else if (this.clicked && 
-                   this.selectedTool !== "select" && 
-                   this.selectedTool !== "eraser") {
-            // Only create new shapes for drawing tools (rect, circle, pencil)
-            const width = x - this.startX;
-            const height = y - this.startY;
-    
-            let shape: Shape | null = null;
-            switch (this.selectedTool) {
-                case "rect":
-                    shape = {
-                        type: "rect",
-                        x: this.startX,
-                        y: this.startY,
-                        width,
-                        height,
-                        uuid: this.generateUUID()
-                    };
-                    break;
-                case "circle":
-                    const radius = Math.abs(Math.max(width, height) / 2);
-                    shape = {
-                        type: "circle",
-                        centerX: this.startX + radius,
-                        centerY: this.startY + radius,
-                        radius,
-                        uuid: this.generateUUID()
-                    };
-                    break;
-                case "pencil":
-                    // Pencil shapes are already added during mouse move
-                    break;
-            }
-    
-            if (shape) {
-                this.shapes.push(shape);
-                this.saveShapesToStorage();
-            }
-        }
-    
-        // Reset all state flags
-        this.clicked = false;
-        this.isDragging = false;
-        this.isResizing = false;
-        this.resizeHandle = null;
-    };
+    // Clear temporary points
+    this.pencilPoints = []
+    this.eraserPoints = []
+    this.stopDrawing()
+    this.clearCanvas()
+  }
 }
-

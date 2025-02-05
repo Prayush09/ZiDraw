@@ -73,6 +73,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 app.post("/api/create-room", middleware, async (req, res) => {
+    console.log("controller in create room!");
     const pdata = CreateRoomSchema.safeParse(req.body);
 
     if(!pdata.success){

@@ -1,14 +1,16 @@
 import React from 'react';
 
 export function IconButton({
-    icon, onClick, activated
+    icon, onClick, activated, name
 }: {
     icon: React.ReactNode,
+    name?: string,
     onClick: () => void,
     activated: boolean
 }){
-    return <div className={`m-2 p-2 cursor-pointer rounded-full bg-black hover:bg-gray 
+    return <div className={`flex flex-col bg-transparent items-center justify-center m-2 p-2 cursor-pointer rounded-full bg-black hover:bg-gray text-xs
     ${activated ? "text-red-200" : "text-white"} `} onClick={onClick}>
         {icon}
+        {name}
     </div>
 }
