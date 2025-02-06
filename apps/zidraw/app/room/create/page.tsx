@@ -1,9 +1,9 @@
-"use client"; // For Next.js Client Component
+"use client"; 
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { createRoom } from "@/app/draw/http"; // Assuming this is your API function
+import { createRoom } from "@/app/draw/http"; 
 import BackButton from "@/components/ui/BackButton";
 
 export default function CreateRoom() {
@@ -14,9 +14,10 @@ export default function CreateRoom() {
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log(name);
       const response = await createRoom(name);
-      console.log("Room created successfully:", response);
-      router.push(`/canvas/${response.data.roomId}`); // Redirect to the room's canvas
+      console.log("Room created successfully:", response.message);
+      router.push(`/canvas/${response.data.roomId}`);
     } catch (error) {
       console.error("Error creating room:", error);
       setErrorMessage("Failed to create room. Please try again.");

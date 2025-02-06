@@ -10,7 +10,10 @@ const app = express();
 
 app.use(express.json());
 
-app.use(cors({origin: 'http://localhost:3000'}));
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://192.168.1.14:3000'],
+    credentials: true
+}));
 
 app.post("/api/signup", async (req, res) => {
     console.log(req.body)
@@ -106,7 +109,7 @@ app.post("/api/create-room", middleware, async (req, res) => {
     }
 })
 
-app.get("/api/chats/:roomId", middleware, async (req, res) => {
+app.get("/api/chats/:roomId", async (req, res) => {
     try {
         const roomId = Number(req.params.roomId);
         const messages = await prismaClient.chat.findMany({
@@ -166,7 +169,7 @@ app.post("/api/chat/delete", middleware, async (req, res) => {
 })
 
 
-app.listen(3001, () => {
+app.listen(3001, '0.0.0.0', () => {
     console.log("Server started at 3001");
 });
 

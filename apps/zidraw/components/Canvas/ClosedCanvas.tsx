@@ -1,5 +1,5 @@
 "use client"
-
+//TODO: ADD MOBILE COMPATIBILITY
 import { useRef, useState, useEffect } from "react"
 import { Game } from "@/app/draw/Game"
 import { IconButton } from "./IconButton"
@@ -53,7 +53,7 @@ export function ClosedCanvas({ roomId, socket }: { socket: WebSocket; roomId: st
   return (
     <div className="h-screen w-screen relative">
       <BackButton className="fixed top-4 right-4 sm:top-8 sm:right-8 z-50" />
-      <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} />
+      <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height}  />
       <Toolbar
         setSelectedTool={setSelectedTool}
         selectedTool={selectedTool}
