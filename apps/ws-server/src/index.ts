@@ -105,10 +105,6 @@ websocketserver.on("connection", function connection(ws, request){
 
         if(parsedData.type === 'clearCanvas'){
             const roomId = parsedData.roomId;
-            // Optionally, clear the database as well:
-            // e.g., await canvasCleared(roomId);
-    
-            // Broadcast the clearCanvas message to users in the room.
             users.forEach(user => {
                 if(user.rooms.includes(roomId.toString())){
                     user.ws.send(JSON.stringify({
