@@ -6,7 +6,7 @@ export function IconButton({
     icon: React.ReactNode,
     name?: string,
     onClick: () => void,
-    activated: boolean,
+    activated?: boolean,
     className?: string
 }){
     return <div className={`flex flex-col bg-transparent items-center justify-center m-2 p-2 cursor-pointer rounded-full bg-black hover:bg-gray text-xs

@@ -169,7 +169,7 @@ app.post("/api/chat/delete", middleware, async (req, res) => {
 })
 
 
-app.listen(3001, '0.0.0.0', () => {
+app.listen(3001, () => {
     console.log("Server started at 3001");
 });
 

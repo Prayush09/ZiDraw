@@ -3,7 +3,7 @@ import jwt, {JwtPayload} from 'jsonwebtoken';
 import { JWT_SECRET } from '@repo/backend-common/config';
 import { prismaClient } from '@repo/db-package/prisma';
 
-const websocketserver = new WebSocketServer({host: '0.0.0.0', port: 8080 }, () => {
+const websocketserver = new WebSocketServer({port: 8080 }, () => {
     console.log("Websocket server is running on port 8080");
 });
 
