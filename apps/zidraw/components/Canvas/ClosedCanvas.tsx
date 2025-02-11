@@ -3,8 +3,10 @@
 import { useRef, useState, useEffect } from "react"
 import { Game } from "@/app/draw/Game"
 import { IconButton } from "./IconButton"
-import { Circle, Pencil, RectangleHorizontalIcon, ClipboardX, Eraser, Menu, X } from "lucide-react"
+import { Circle, Pencil, RectangleHorizontalIcon, ClipboardX, Eraser, Menu, X, Icon } from "lucide-react"
 import BackButton from "@/components/ui/BackButton"
+import { useRouter } from 'next/navigation'
+import AuthCheck from '@/app/room/AuthCheck'
 
 export type Tool = "circle" | "rect" | "pencil" | "clear canvas" | "eraser"
 
@@ -51,6 +53,7 @@ export function ClosedCanvas({ roomId, socket }: { socket: WebSocket; roomId: st
   }, [roomId, socket])
 
   return (
+    <AuthCheck>
     <div className="h-screen w-screen relative">
       <BackButton className="fixed top-4 right-4 sm:top-8 sm:right-8 z-50" />
       <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height}  />
@@ -61,8 +64,10 @@ export function ClosedCanvas({ roomId, socket }: { socket: WebSocket; roomId: st
         setSidebarOpen={setSidebarOpen}
       />
     </div>
+    </AuthCheck>
   )
 }
+
 
 function Toolbar({
   selectedTool,
@@ -75,6 +80,14 @@ function Toolbar({
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
 }) {
+
+  const router = useRouter();
+
+  function closeCanvas(){
+    localStorage.removeItem("token");
+    router.push("/");
+  }
+
   return (
     <div>
       {/* Toggle Button */}
@@ -121,6 +134,13 @@ function Toolbar({
             icon={<Eraser className="w-5 h-5" />}
             name="Eraser"
           />
+        </div>
+        <div>
+          <IconButton
+            onClick={closeCanvas}
+            icon={<X className="w-3 h-3" />}
+            name="close"
+            />
         </div>
       </div>
     </div>

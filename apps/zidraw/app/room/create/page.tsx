@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { createRoom } from "@/app/draw/http"; 
 import BackButton from "@/components/ui/BackButton";
+import AuthCheck from "../AuthCheck";
 
 export default function CreateRoom() {
   const [name, setName] = useState("");
@@ -25,6 +26,7 @@ export default function CreateRoom() {
   };
 
   return (
+    <AuthCheck>
     <div className="flex flex-col items-center justify-center h-screen w-screen bg-black text-white relative overflow-hidden">
     <BackButton label="Go back"></BackButton>
       <motion.div className="relative z-10 text-center w-full max-w-md p-8 bg-black/40 rounded-xl shadow-2xl">
@@ -53,5 +55,6 @@ export default function CreateRoom() {
         )}
       </motion.div>
     </div>
+    </AuthCheck>
   );
 }

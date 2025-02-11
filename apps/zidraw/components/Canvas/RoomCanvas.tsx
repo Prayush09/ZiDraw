@@ -3,7 +3,7 @@
 import {useEffect, useState } from 'react'
 import Loading from '@/components/ui/loading'
 import { ClosedCanvas } from './ClosedCanvas';
-import { PRIVATE_IP_WS_URL } from '@/config'
+import { WS_URL } from '@/config'
 
 /*
 * Code to build and establish a web-sockeet connection between a user and a room
@@ -17,7 +17,7 @@ export function RoomCanvas({roomId}: {roomId: string}){
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        const url = `${PRIVATE_IP_WS_URL}?token=${token}`
+        const url = `${WS_URL}?token=${token}`
         const ws = new WebSocket(`${url}`);
         ws.onopen = () => {
             setSocket(ws);

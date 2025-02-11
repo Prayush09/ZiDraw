@@ -1,5 +1,4 @@
 import type { Tool } from "@/components/Canvas/OpenCanvas"
-import { getExistingShapes, canvasCleared } from "./http"
 
 type Shape =
   | {
@@ -26,7 +25,7 @@ type Shape =
       points?: { x: number; y: number }[]
     }
   | {
-      type: "clear Canvas"
+      type: "clear canvas"
       startX: 0
       startY: 0
       endX: number
@@ -55,18 +54,30 @@ export class FreeGame {
   private isDrawing = false
   private isErasing = false
   private currentShape: Shape | null = null
+  private shapes: Shape[] = []
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
     this.ctx = canvas.getContext("2d")!
     this.ctx.fillStyle = "black"
-
-    // Enable image smoothing
     this.ctx.imageSmoothingEnabled = true
     this.clicked = false
 
+    // Load shapes from localStorage
+    this.loadShapes()
     this.init()
     this.initMouseHandlers()
+  }
+
+  private loadShapes() {
+    const savedShapes = localStorage.getItem('canvasShapes')
+    if (savedShapes) {
+      this.shapes = JSON.parse(savedShapes)
+    }
+  }
+
+  private saveShapes() {
+    localStorage.setItem('canvasShapes', JSON.stringify(this.shapes))
   }
 
   private throttle = (fn: Function, delay: number) => {
@@ -102,6 +113,9 @@ export class FreeGame {
 
   setTool(tool: Tool) {
     this.selectedTool = tool
+    if (tool === "clear canvas") {
+      this.clearCanvas()
+    }
   }
 
   private renderShapes() {
@@ -110,9 +124,37 @@ export class FreeGame {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
 
     if (!this.canvasCleared) {
-      this.ctx.strokeStyle = "rgba(255, 255, 255)"
-      this.ctx.lineWidth = 3
+      // First render all saved shapes
+      this.shapes.forEach(shape => {
+        if (shape.type === "eraser") {
+          this.renderErasePath(shape)
+        } else if (shape.type === "rect") {
+          this.ctx.strokeStyle = "rgba(255, 255, 255)"
+          this.ctx.lineWidth = 3
+          this.ctx.strokeRect(
+            shape.x,
+            shape.y,
+            shape.width,
+            shape.height
+          )
+        } else if (shape.type === "circle") {
+          this.ctx.strokeStyle = "rgba(255, 255, 255)"
+          this.ctx.lineWidth = 3
+          this.ctx.beginPath()
+          this.ctx.arc(
+            shape.centerX,
+            shape.centerY,
+            shape.radius,
+            0,
+            Math.PI * 2
+          )
+          this.ctx.stroke()
+        } else if (shape.type === "pencil") {
+          this.renderPencilPath(shape)
+        }
+      })
 
+      // Then render the current shape being drawn
       if (this.currentShape) {
         this.ctx.strokeStyle = "rgba(255, 255, 255)"
         this.ctx.lineWidth = 3
@@ -124,7 +166,7 @@ export class FreeGame {
             this.currentShape.x,
             this.currentShape.y,
             this.currentShape.width,
-            this.currentShape.height,
+            this.currentShape.height
           )
         } else if (this.currentShape.type === "circle") {
           this.ctx.beginPath()
@@ -153,6 +195,9 @@ export class FreeGame {
   clearCanvas() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+    // Clear shapes from localStorage
+    this.shapes = []
+    localStorage.removeItem('canvasShapes')
     this.renderShapes()
   }
 
@@ -185,13 +230,11 @@ export class FreeGame {
   private renderErasePath(shape: Shape) {
     if (shape.type !== "eraser" || !shape.points) return
   
-    const eraserSize = 20 // Adjust the eraser size as needed
+    const eraserSize = 20
   
     this.ctx.save()
-    // Set composite operation so drawing will remove pixels
     this.ctx.globalCompositeOperation = "destination-out"
     shape.points.forEach((point) => {
-      // Draw a solid block at each point to mimic erasing
       this.ctx.fillRect(
         point.x - eraserSize / 2,
         point.y - eraserSize / 2,
@@ -205,8 +248,6 @@ export class FreeGame {
   async init() {
     this.clearCanvas()
   }
-
-  // Removed socket initialization since we're only focusing on canvas logic
 
   private startDrawing() {
     this.isDrawing = true
@@ -302,7 +343,6 @@ export class FreeGame {
 
     if (this.selectedTool === "clear canvas") {
       this.canvasCleared = true
-      // Optionally call canvasCleared(this.roomId) if needed for HTTP logic
       this.clearCanvas()
       this.stopDrawing()
       return
@@ -349,10 +389,14 @@ export class FreeGame {
     this.canvasCleared = false
     if (!shape) return
 
+    // Add the shape to the shapes array and save to localStorage
+    this.shapes.push(shape)
+    this.saveShapes()
+
     // Clear temporary points
     this.pencilPoints = []
     this.eraserPoints = []
     this.stopDrawing()
-    this.clearCanvas()
+    this.renderShapes()
   }
 }
