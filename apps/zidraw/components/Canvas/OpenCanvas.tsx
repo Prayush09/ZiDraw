@@ -14,12 +14,17 @@ export function OpenCanvas() {
   const [game, setGame] = useState<FreeGame | null>(null)
   const [selectedTool, setSelectedTool] = useState<Tool>("pencil")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 }) 
 
   useEffect(() => {
     if (canvasRef.current) {
       const currentGame = new FreeGame(canvasRef.current)
       setGame(currentGame)
     }
+  }, [])
+
+  useEffect(() => {
+    setDimensions({ width: window.innerWidth, height: window.innerHeight })
   }, [])
 
   useEffect(() => {
@@ -71,7 +76,7 @@ export function OpenCanvas() {
         setIsSidebarOpen={setIsSidebarOpen}
       />
       
-      {/* Overlay when sidebar is open on mobile */}
+      
       <div 
         className={cn(
           "fixed inset-0 bg-white/10 backdrop-blur-sm transition-opacity md:hidden",
