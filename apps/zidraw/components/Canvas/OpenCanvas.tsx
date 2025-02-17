@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from "react"
 import { FreeGame } from "@/app/draw/FreeGame"
-import { IconButton } from "./IconButton"
+import { IconButton } from "../ui/IconButton"
 import { Circle, Pencil, RectangleHorizontalIcon, Eraser, ClipboardX, X, Menu, ChevronLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/app/lib/utils"

@@ -1,11 +1,11 @@
 "use client"
 
 import { RoomCanvas } from '@/components/Canvas/RoomCanvas';
+import { useParams } from 'next/navigation';
 
-type Params = Promise<{ roomId: string }>;
-
-export default async function CanvasPage({ params }: { params: Params }) {
-    const { roomId } = await params;
+export default function CanvasPage() {
+    const params = useParams();
+    const roomId = params.roomId as string;
 
     return <RoomCanvas roomId={roomId} />;
 }

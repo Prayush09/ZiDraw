@@ -1,12 +1,9 @@
 "use client"
-//TODO: ADD MOBILE COMPATIBILITY
 import { useRef, useState, useEffect } from "react"
 import { Game } from "@/app/draw/Game"
-import { IconButton } from "./IconButton"
-import { Circle, Pencil, RectangleHorizontalIcon, ClipboardX, Eraser, Menu, X, Icon } from "lucide-react"
+import { IconButton } from "@/components/ui/IconButton"
+import { Circle, Pencil, RectangleHorizontalIcon, ClipboardX, Eraser, Menu, X } from "lucide-react"
 import BackButton from "@/components/ui/BackButton"
-import { useRouter } from 'next/navigation'
-import AuthCheck from '@/app/room/AuthCheck'
 
 export type Tool = "circle" | "rect" | "pencil" | "clear canvas" | "eraser"
 
@@ -15,43 +12,45 @@ export function ClosedCanvas({ roomId, socket }: { socket: WebSocket; roomId: st
   const [game, setGame] = useState<Game>()
   const [selectedTool, setSelectedTool] = useState<Tool>("rect")
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 }) // Prevent SSR error
+  const [dimensions, setDimensions] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  })
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
-    }
-  }, []) // Run only once after mounting
-
+  // Initialize game with selected tool
   useEffect(() => {
     game?.setTool(selectedTool)
   }, [selectedTool, game])
 
+  // Handle window resizing
   useEffect(() => {
     const handleResize = () => {
-      if (typeof window !== "undefined" && canvasRef.current) {
+      if (canvasRef.current) {
+        // Update the canvas size
+        const newWidth = window.innerWidth
+        const newHeight = window.innerHeight
+
+        // Update the dimensions state
         setDimensions({
-          width: window.innerWidth,
-          height: window.innerHeight,
+          width: newWidth,
+          height: newHeight,
         })
+
+        // Update canvas size and clear it on resize
+        canvasRef.current.width = newWidth
+        canvasRef.current.height = newHeight
+
+        // Clear the canvas after resizing
         game?.clearCanvas()
       }
     }
 
-    if (typeof window !== "undefined") {
-      window.addEventListener("resize", handleResize)
-    }
+    window.addEventListener("resize", handleResize)
 
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener("resize", handleResize)
-      }
-    }
+    return () => window.removeEventListener("resize", handleResize)
   }, [game])
 
+  // Initialize game instance when component mounts or when roomId/socket changes
   useEffect(() => {
     if (canvasRef.current) {
       const currentGame = new Game(canvasRef.current, roomId, socket)
@@ -64,18 +63,17 @@ export function ClosedCanvas({ roomId, socket }: { socket: WebSocket; roomId: st
   }, [roomId, socket])
 
   return (
-    <AuthCheck>
-      <div className="h-screen w-screen relative">
-        <BackButton className="fixed top-4 right-4 sm:top-8 sm:right-8 z-50" />
-        <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} />
-        <Toolbar
-          setSelectedTool={setSelectedTool}
-          selectedTool={selectedTool}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-      </div>
-    </AuthCheck>
+    <div className="h-screen w-screen relative">
+      <BackButton className="fixed top-4 right-4 sm:top-8 sm:right-8 z-50" />
+      {/* Canvas with dynamically set width and height */}
+      <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} />
+      <Toolbar
+        setSelectedTool={setSelectedTool}
+        selectedTool={selectedTool}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+      />
+    </div>
   )
 }
 
@@ -90,13 +88,6 @@ function Toolbar({
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
 }) {
-  const router = useRouter()
-
-  function closeCanvas() {
-    localStorage.removeItem("token")
-    router.push("/")
-  }
-
   return (
     <div>
       {/* Toggle Button */}
@@ -109,9 +100,7 @@ function Toolbar({
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 h-full w-48 bg-black shadow-lg p-2 transform ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } transition-transform duration-300 ease-in-out z-40`}
+        className={`fixed left-0 top-0 h-full w-48 bg-black shadow-lg p-2 transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out z-40`}
       >
         <h2 className="text-lg font-bold mb-4 mt-16">Tools</h2>
         <div className="flex flex-col gap-2">
@@ -145,9 +134,6 @@ function Toolbar({
             icon={<Eraser className="w-5 h-5" />}
             name="Eraser"
           />
-        </div>
-        <div>
-          <IconButton onClick={closeCanvas} icon={<X className="w-3 h-3" />} name="close" />
         </div>
       </div>
     </div>

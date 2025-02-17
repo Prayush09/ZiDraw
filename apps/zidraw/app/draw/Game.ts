@@ -61,8 +61,7 @@ export class Game {
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     this.canvas = canvas
     this.ctx = canvas.getContext("2d")!
-    this.ctx.fillStyle = 'transparent';
-
+    this.ctx.fillStyle = 'black';
     // Enable image smoothing
     this.ctx.imageSmoothingEnabled = true
     this.existingShapes = []
@@ -108,50 +107,55 @@ export class Game {
   }
 
   private renderShapes() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
-
+    
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  
+  
+    this.ctx.fillStyle = "black"; 
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+  
     if (!this.canvasCleared) {
-      this.ctx.strokeStyle = "rgba(255, 255, 255)"
-      this.ctx.lineWidth = 3
-
+      this.ctx.strokeStyle = "rgba(255, 255, 255)";
+      this.ctx.lineWidth = 3;
+  
       this.existingShapes.forEach((shape) => {
         if (shape.type === "rect") {
-          this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height)
+          this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
         } else if (shape.type === "circle") {
-          this.ctx.beginPath()
-          this.ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2)
-          this.ctx.stroke()
+          this.ctx.beginPath();
+          this.ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
+          this.ctx.stroke();
         } else if (shape.type === "pencil") {
-          this.renderPencilPath(shape)
+          this.renderPencilPath(shape);
         } else if (shape.type === "eraser") {
-          this.renderErasePath(shape)
+          this.renderErasePath(shape);
         }
-      })
-
+      });
+  
       if (this.currentShape) {
-        this.ctx.strokeStyle = "rgba(255, 255, 255)"
-        this.ctx.lineWidth = 3
-
+        this.ctx.strokeStyle = "rgba(255, 255, 255)";
+        this.ctx.lineWidth = 3;
+  
         if (this.currentShape.type === "eraser") {
-          this.renderErasePath(this.currentShape)
+          this.renderErasePath(this.currentShape);
         } else if (this.currentShape.type === "rect") {
           this.ctx.strokeRect(
             this.currentShape.x,
             this.currentShape.y,
             this.currentShape.width,
             this.currentShape.height,
-          )
+          );
         } else if (this.currentShape.type === "circle") {
-          this.ctx.beginPath()
-          this.ctx.arc(this.currentShape.centerX, this.currentShape.centerY, this.currentShape.radius, 0, Math.PI * 2)
-          this.ctx.stroke()
+          this.ctx.beginPath();
+          this.ctx.arc(this.currentShape.centerX, this.currentShape.centerY, this.currentShape.radius, 0, Math.PI * 2);
+          this.ctx.stroke();
         } else if (this.currentShape.type === "pencil") {
-          this.renderPencilPath(this.currentShape)
+          this.renderPencilPath(this.currentShape);
         }
       }
     }
   }
+  
 
   private render = () => {
     if (this.isDrawing) {
@@ -166,7 +170,6 @@ export class Game {
         this.canvasCleared = false;
     }
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    this.ctx.fillStyle = 'transparent';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     this.renderShapes()
   }
@@ -390,11 +393,11 @@ export class Game {
     if (shape.type !== "eraser" || !shape.points) return;
   
     const eraserSize = 20; // Adjust the eraser size as needed
-  
+    this.ctx.fillStyle = 'black';
+
     this.ctx.save();
     // You can change this if needed
     this.ctx.globalCompositeOperation = 'destination-out';
-    this.ctx.fillStyle = 'black';
     shape.points.forEach((point) => {
       // Use fillRect to draw a solid block at each point
       this.ctx.fillRect(

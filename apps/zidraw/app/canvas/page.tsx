@@ -9,10 +9,12 @@ export default function FreeCanvas() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token ) {
-      setIsLoggedIn(true);
-    } else {
+    // Move localStorage access to useEffect to ensure it only runs client-side
+    try {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    } catch (error) {
+      console.error("Error accessing localStorage:", error);
       setIsLoggedIn(false);
     }
   }, []);
@@ -23,9 +25,5 @@ export default function FreeCanvas() {
     }
   }, [isLoggedIn, router]); 
 
-  return (
-    <>
-      <OpenCanvas />
-    </>
-  );
+  return <OpenCanvas />;
 }
