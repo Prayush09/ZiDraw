@@ -15,10 +15,16 @@ export function ClosedCanvas({ roomId, socket }: { socket: WebSocket; roomId: st
   const [game, setGame] = useState<Game>()
   const [selectedTool, setSelectedTool] = useState<Tool>("rect")
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [dimensions, setDimensions] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  })
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 }) // Prevent SSR error
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
+    }
+  }, []) // Run only once after mounting
 
   useEffect(() => {
     game?.setTool(selectedTool)
@@ -26,9 +32,7 @@ export function ClosedCanvas({ roomId, socket }: { socket: WebSocket; roomId: st
 
   useEffect(() => {
     const handleResize = () => {
-      if (canvasRef.current) {
-        canvasRef.current.width = window.innerWidth
-        canvasRef.current.height = window.innerHeight
+      if (typeof window !== "undefined" && canvasRef.current) {
         setDimensions({
           width: window.innerWidth,
           height: window.innerHeight,
@@ -37,8 +41,15 @@ export function ClosedCanvas({ roomId, socket }: { socket: WebSocket; roomId: st
       }
     }
 
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", handleResize)
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("resize", handleResize)
+      }
+    }
   }, [game])
 
   useEffect(() => {
@@ -54,20 +65,19 @@ export function ClosedCanvas({ roomId, socket }: { socket: WebSocket; roomId: st
 
   return (
     <AuthCheck>
-    <div className="h-screen w-screen relative">
-      <BackButton className="fixed top-4 right-4 sm:top-8 sm:right-8 z-50" />
-      <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height}  />
-      <Toolbar
-        setSelectedTool={setSelectedTool}
-        selectedTool={selectedTool}
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-      />
-    </div>
+      <div className="h-screen w-screen relative">
+        <BackButton className="fixed top-4 right-4 sm:top-8 sm:right-8 z-50" />
+        <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} />
+        <Toolbar
+          setSelectedTool={setSelectedTool}
+          selectedTool={selectedTool}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+        />
+      </div>
     </AuthCheck>
   )
 }
-
 
 function Toolbar({
   selectedTool,
@@ -80,12 +90,11 @@ function Toolbar({
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
 }) {
+  const router = useRouter()
 
-  const router = useRouter();
-
-  function closeCanvas(){
-    localStorage.removeItem("token");
-    router.push("/");
+  function closeCanvas() {
+    localStorage.removeItem("token")
+    router.push("/")
   }
 
   return (
@@ -100,7 +109,9 @@ function Toolbar({
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 h-full w-48 bg-black shadow-lg p-2 transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out z-40`}
+        className={`fixed left-0 top-0 h-full w-48 bg-black shadow-lg p-2 transform ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } transition-transform duration-300 ease-in-out z-40`}
       >
         <h2 className="text-lg font-bold mb-4 mt-16">Tools</h2>
         <div className="flex flex-col gap-2">
@@ -136,14 +147,9 @@ function Toolbar({
           />
         </div>
         <div>
-          <IconButton
-            onClick={closeCanvas}
-            icon={<X className="w-3 h-3" />}
-            name="close"
-            />
+          <IconButton onClick={closeCanvas} icon={<X className="w-3 h-3" />} name="close" />
         </div>
       </div>
     </div>
   )
 }
-
