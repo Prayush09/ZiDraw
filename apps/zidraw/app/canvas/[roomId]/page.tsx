@@ -1,3 +1,5 @@
+"use client"
+
 import { RoomCanvas } from '@/components/Canvas/RoomCanvas';
 
 type Params = Promise<{ roomId: string }>;
