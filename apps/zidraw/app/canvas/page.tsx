@@ -2,14 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { OpenCanvas } from "@/components/Canvas/OpenCanvas";
+import  OpenCanvas  from "@/components/Canvas/OpenCanvas";
 
 export default function FreeCanvas() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // Move localStorage access to useEffect to ensure it only runs client-side
     try {
       const token = localStorage.getItem("token");
       setIsLoggedIn(!!token);

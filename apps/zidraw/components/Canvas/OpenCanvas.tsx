@@ -6,10 +6,11 @@ import { IconButton } from "../ui/IconButton"
 import { Circle, Pencil, RectangleHorizontalIcon, Eraser, ClipboardX, X, Menu, ChevronLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/app/lib/utils"
+import dynamic from "next/dynamic"
 
 export type Tool = "circle" | "rect" | "pencil" | "clear canvas" | "eraser"
 
-export function OpenCanvas() {
+const CanvasComponent = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [game, setGame] = useState<FreeGame | null>(null)
   const [selectedTool, setSelectedTool] = useState<Tool>("pencil")
@@ -179,3 +180,7 @@ function Toolbar({
     </>
   )
 }
+
+const OpenCanvas = dynamic(() => Promise.resolve(CanvasComponent), { ssr: false })
+
+export default OpenCanvas;

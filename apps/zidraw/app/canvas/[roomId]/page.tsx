@@ -1,11 +1,11 @@
 "use client"
 
 import { RoomCanvas } from '@/components/Canvas/RoomCanvas';
-import { useParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 export default function CanvasPage() {
-    const params = useParams();
-    const roomId = params.roomId as string;
+    const params = useSearchParams();
+    const roomId = params.get("roomId");
 
-    return <RoomCanvas roomId={roomId} />;
+    return <RoomCanvas roomId={roomId!} />;
 }
