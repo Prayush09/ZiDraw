@@ -10,11 +10,10 @@ const app = express();
 
 app.use(express.json());
 
+app.set('trust proxy', true);
+
 app.use(cors({
-    origin: [
-        'http://dev-http.zidraw.com', 
-        'http://dev-ws.zidraw.com'
-    ],
+    origin: '*',
     credentials: true
 }));
 
