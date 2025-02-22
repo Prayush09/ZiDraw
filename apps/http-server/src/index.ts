@@ -12,8 +12,8 @@ app.use(express.json());
 
 app.use(cors({
     origin: [
-        'http://app-http.zidraw.com', 
-        'http://app-ws.zidraw.com'
+        'http://dev-http.zidraw.com', 
+        'http://dev-ws.zidraw.com'
     ],
     credentials: true
 }));
