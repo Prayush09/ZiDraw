@@ -13,7 +13,7 @@ app.use(express.json());
 app.set('trust proxy', true);
 
 app.use(cors({
-    origin: ["http://dev-http.zidraw.com", "http://localhost:3000", "http://app-http.zidraw.com"],
+    origin: ["http://dev.zidraw.com", "http://localhost:3000", "http://app.zidraw.com"],
     credentials: true
 }));
 
