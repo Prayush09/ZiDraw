@@ -1,6 +1,7 @@
 import { BACKEND_URL } from "@/config";
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
+//TODO: DO GIT PULL ON VM's
 
 export async function getExistingShapes(roomId: string){
     console.log(roomId);
@@ -75,3 +76,55 @@ export async function canvasCleared(roomId: string){
         console.error(error);
     }
 }
+
+/*
+
+    events {
+    # Event directives...
+}
+
+http {
+	server {
+        listen 80;
+        server_name dev-http.zidraw.com;
+
+        location / {
+            proxy_pass http://localhost:3001;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+        }
+	}
+
+	server {
+        listen 80;
+        server_name dev-ws.zidraw.com;
+
+        location / {
+            proxy_pass http://localhost:8080;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+        }
+	}
+
+    server {
+        listen 80;
+        server_name dev.zidraw.com;
+
+        location / {
+            proxy_pass http://localhost:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+        }
+	}
+}
+
+*/
