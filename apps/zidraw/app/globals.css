@@ -7,6 +7,12 @@
   --foreground: #171717;
 }
 
+nextjs-portal {
+  display: none;
+}
+
+
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
